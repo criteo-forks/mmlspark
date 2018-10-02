@@ -12,7 +12,6 @@ import org.apache.spark.sql.{Column, DataFrame}
   */
 class VerifyLightGBMRegressor extends Benchmarks with EstimatorFuzzing[LightGBMRegressor] {
   lazy val moduleName = "lightgbm"
-  var portIndex = 0
   val numPartitions = 2
 
   verifyLearnerOnRegressionCsvFile("energyefficiency2012_data.train.csv", "Y1", 0,
@@ -29,8 +28,6 @@ class VerifyLightGBMRegressor extends Benchmarks with EstimatorFuzzing[LightGBMR
   }
 
   test("Verify LightGBM Regressor can be run with TrainValidationSplit") {
-    // Increment port index
-    portIndex += numPartitions
     val fileName = "airfoil_self_noise.train.csv"
     val labelColumnName = "Scaled sound pressure level"
     val fileLocation = DatasetUtils.regressionTrainFile(fileName).toString
@@ -40,7 +37,6 @@ class VerifyLightGBMRegressor extends Benchmarks with EstimatorFuzzing[LightGBMR
     val lgbm = new LightGBMRegressor()
       .setLabelCol(labelColumnName)
       .setFeaturesCol(featuresColumn)
-      .setDefaultListenPort(LightGBMConstants.defaultLocalListenPort + portIndex)
       .setNumLeaves(5)
       .setNumIterations(10)
 
@@ -63,8 +59,6 @@ class VerifyLightGBMRegressor extends Benchmarks with EstimatorFuzzing[LightGBMR
   }
 
   test("Verify LightGBM Regressor with tweedie distribution") {
-    // Increment port index
-    portIndex += numPartitions
     val fileName = "airfoil_self_noise.train.csv"
     val labelColumnName = "Scaled sound pressure level"
     val fileLocation = DatasetUtils.regressionTrainFile(fileName).toString
@@ -74,7 +68,6 @@ class VerifyLightGBMRegressor extends Benchmarks with EstimatorFuzzing[LightGBMR
     val lgbm = new LightGBMRegressor()
       .setLabelCol(labelColumnName)
       .setFeaturesCol(featuresColumn)
-      .setDefaultListenPort(LightGBMConstants.defaultLocalListenPort + portIndex)
       .setNumLeaves(5)
       .setNumIterations(10)
       .setObjective("tweedie")
@@ -116,8 +109,6 @@ class VerifyLightGBMRegressor extends Benchmarks with EstimatorFuzzing[LightGBMR
                                        decimals: Int,
                                        columnsFilter: Option[String] = None): Unit = {
     test("Verify LightGBMRegressor can be trained and scored on " + fileName, TestBase.Extended) {
-      // Increment port index
-      portIndex += numPartitions
       val fileLocation = DatasetUtils.regressionTrainFile(fileName).toString
       val readDataset = readCSV(fileName, fileLocation).repartition(numPartitions)
       val dataset =
@@ -133,7 +124,6 @@ class VerifyLightGBMRegressor extends Benchmarks with EstimatorFuzzing[LightGBMR
       val trainData = featurizer.transform(dataset)
       val model = lgbm.setLabelCol(labelCol)
         .setFeaturesCol(featuresColumn)
-        .setDefaultListenPort(LightGBMConstants.defaultLocalListenPort + portIndex)
         .setNumLeaves(5)
         .setNumIterations(10)
         .setPredictionCol(predCol)

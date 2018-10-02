@@ -16,7 +16,6 @@ import org.apache.spark.ml.tuning.{ParamGridBuilder, TrainValidationSplit}
 /** Tests to validate the functionality of LightGBM module. */
 class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBMClassifier] {
   lazy val moduleName = "lightgbm"
-  var portIndex = 30
   val numPartitions = 2
   val objective = "binary"
 
@@ -41,8 +40,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
   }
 
   test("Verify LightGBM Classifier can be run with TrainValidationSplit") {
-    // Increment port index
-    portIndex += numPartitions
     val fileName = "PimaIndian.csv"
     val labelColumnName = "Diabetes mellitus"
     val fileLocation = DatasetUtils.binaryTrainFile(fileName).toString
@@ -53,7 +50,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
       .setLabelCol(labelColumnName)
       .setFeaturesCol(featuresColumn)
       .setRawPredictionCol(rawPredCol)
-      .setDefaultListenPort(LightGBMConstants.defaultLocalListenPort + portIndex)
       .setNumLeaves(5)
       .setNumIterations(10)
       .setObjective(objective)
@@ -93,8 +89,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
                                    labelColumnName: String,
                                    decimals: Int): Unit = {
     test("Verify LightGBMClassifier can be trained and scored on " + fileName, TestBase.Extended) {
-      // Increment port index
-      portIndex += numPartitions
       val fileLocation = DatasetUtils.binaryTrainFile(fileName).toString
       val dataset = readCSV(fileName, fileLocation).repartition(numPartitions)
       val lgbm = new LightGBMClassifier()
@@ -105,7 +99,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
       val model = lgbm.setLabelCol(labelColumnName)
         .setFeaturesCol(featuresColumn)
         .setRawPredictionCol(rawPredCol)
-        .setDefaultListenPort(LightGBMConstants.defaultLocalListenPort + portIndex)
         .setNumLeaves(5)
         .setNumIterations(10)
         .setObjective(objective)
@@ -126,8 +119,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
                                        labelColumnName: String,
                                        decimals: Int): Unit = {
     test("Verify LightGBMClassifier can be trained and scored on multiclass " + fileName, TestBase.Extended) {
-      // Increment port index
-      portIndex += numPartitions
       val fileLocation = DatasetUtils.multiclassTrainFile(fileName).toString
       val dataset = readCSV(fileName, fileLocation).repartition(numPartitions)
       val lgbm = new LightGBMClassifier()
@@ -138,7 +129,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
       val model = lgbm.setLabelCol(labelColumnName)
         .setFeaturesCol(featuresColumn)
         .setPredictionCol(predCol)
-        .setDefaultListenPort(LightGBMConstants.defaultLocalListenPort + portIndex)
         .setNumLeaves(5)
         .setNumIterations(10)
         .setObjective(objective)
@@ -178,8 +168,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
                        outputFileName: String,
                        labelColumnName: String): Unit = {
     test("Verify LightGBMClassifier save booster to " + fileName) {
-      // Increment port index
-      portIndex += numPartitions
       val fileLocation = DatasetUtils.binaryTrainFile(fileName).toString
       val dataset = readCSV(fileName, fileLocation).repartition(numPartitions)
       val lgbm = new LightGBMClassifier()
@@ -190,7 +178,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
       val model = lgbm.setLabelCol(labelColumnName)
         .setFeaturesCol(featuresColumn)
         .setRawPredictionCol(rawPredCol)
-        .setDefaultListenPort(LightGBMConstants.defaultLocalListenPort + portIndex)
         .setNumLeaves(5)
         .setNumIterations(10)
         .setObjective(objective)
@@ -206,7 +193,6 @@ class VerifyLightGBMClassifier extends Benchmarks with EstimatorFuzzing[LightGBM
       val newModel = lgbm.setLabelCol(labelColumnName)
         .setFeaturesCol(featuresColumn)
         .setRawPredictionCol(rawPredCol)
-        .setDefaultListenPort(LightGBMConstants.defaultLocalListenPort + portIndex)
         .setNumLeaves(5)
         .setNumIterations(10)
         .setObjective(objective)

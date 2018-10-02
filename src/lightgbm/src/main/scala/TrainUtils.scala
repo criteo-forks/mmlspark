@@ -12,7 +12,7 @@ import org.apache.spark.ml.linalg.{DenseVector, SparseVector}
 import org.apache.spark.sql.Row
 import org.slf4j.Logger
 
-case class NetworkParams(executorIdToHost: Map[Int, String], defaultListenPort: Int, addr: String, port: Int)
+case class NetworkParams(executorIdToHost: Map[Int, String], addr: String, port: Int)
 
 private object TrainUtils extends java.io.Serializable {
 
@@ -141,30 +141,6 @@ private object TrainUtils extends java.io.Serializable {
     }
   }
 
-  private def findOpenPort(defaultListenPort: Int, numCoresPerExec: Int, log: Logger): Socket = {
-    val basePort = defaultListenPort + (LightGBMUtils.getId() * numCoresPerExec)
-    var localListenPort = basePort
-    var foundPort = false
-    var workerServerSocket: Socket = null
-    while (!foundPort) {
-      try {
-        workerServerSocket = new Socket()
-        workerServerSocket.bind(new InetSocketAddress(localListenPort))
-        foundPort = true
-      } catch {
-        case ex: IOException => {
-          log.info(s"Could not bind to port $localListenPort...")
-          localListenPort += 1
-          if (localListenPort - basePort > 1000) {
-            throw new Exception("Error: Could not find open port after 1k tries")
-          }
-        }
-      }
-    }
-    log.info(s"Successfully bound to port $localListenPort")
-    workerServerSocket
-  }
-
   def getNodes(networkParams: NetworkParams, workerHost: String,
                localListenPort: Int, log: Logger): String = {
     using(new Socket(networkParams.addr, networkParams.port)) {
@@ -191,14 +167,14 @@ private object TrainUtils extends java.io.Serializable {
     // Ideally we would start the socket connections in the C layer, this opens us up for
     // race conditions in case other applications open sockets on cluster, but usually this
     // should not be a problem
-    val (nodes, localListenPort) = using(findOpenPort(networkParams.defaultListenPort, numCoresPerExec, log)) {
-      openPort =>
-        val localListenPort = openPort.getLocalPort
-        // Initialize the native library
-        LightGBMUtils.initializeNativeLibrary()
-        val executorId = LightGBMUtils.getId()
-        log.info(s"LightGBM worker connecting to host: ${networkParams.addr} and port: ${networkParams.port}")
-        (getNodes(networkParams, networkParams.executorIdToHost(executorId), localListenPort, log), localListenPort)
+    val (nodes, localListenPort) = using(new Socket()) { socket =>
+      socket.bind(new InetSocketAddress(networkParams.addr, 0))
+      val localListenPort = socket.getLocalPort
+      // Initialize the native library
+      LightGBMUtils.initializeNativeLibrary()
+      val executorId = LightGBMUtils.getId()
+      log.info(s"LightGBM worker connecting to host: ${networkParams.addr} and port: ${networkParams.port}")
+      (getNodes(networkParams, networkParams.executorIdToHost(executorId), localListenPort, log), localListenPort)
     }.get
 
     // Initialize the network communication

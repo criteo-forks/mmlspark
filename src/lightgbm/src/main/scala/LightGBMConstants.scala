@@ -4,9 +4,6 @@
 package com.microsoft.ml.spark
 
 object LightGBMConstants {
-  /** The default port for LightGBM network initialization
-    */
-  val defaultLocalListenPort = 12400
   /** The default timeout for LightGBM network initialization
     */
   val defaultListenTimeout = 120

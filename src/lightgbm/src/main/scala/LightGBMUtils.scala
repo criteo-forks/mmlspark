@@ -100,7 +100,7 @@ object LightGBMUtils {
     }
     val host = getDriverHost(df)
     val port = driverServerSocket.getLocalPort
-    log.info(s"driver waiting for connections on host: ${host} and port: $port")
+    log.info(s"driver waiting for connections on host: $host and port: $port")
     (host, port, f)
   }
 
@@ -189,19 +189,18 @@ object LightGBMUtils {
 
   /** Returns the executor node ips and ports.
     * @param data The input dataframe.
-    * @param defaultListenPort The default listen port.
     * @param numCoresPerExec The number of cores per executor.
     * @return List of nodes as comma separated string and count.
     */
-  def getNodes(data: DataFrame, defaultListenPort: Int, numCoresPerExec: Int): Array[(Int, String)] = {
+  def getNodes(data: DataFrame, numCoresPerExec: Int): Array[(Int, String)] = {
     val nodes = getExecutors(data, numCoresPerExec)
     val getSubsetExecutors = data.rdd.getNumPartitions < nodes.length * numCoresPerExec
     if (nodes.isEmpty) {
       // Running in local[*]
-      getNodesFromPartitionsLocal(data, defaultListenPort)
+      getNodesFromPartitionsLocal(data)
     } else if (getSubsetExecutors) {
       // Special case when num partitions < num executors * numCoresPerExec
-      getNodesFromPartitions(data, defaultListenPort, nodes.toMap)
+      getNodesFromPartitions(data, nodes.toMap)
     } else {
       // Running on cluster, include all workers with driver excluded
       nodes
@@ -211,11 +210,10 @@ object LightGBMUtils {
   /** Returns the nodes from mapPartitions.
     * Only run in case when num partitions < num executors.
     * @param processedData The input data.
-    * @param defaultListenPort The default listening port.
     * @param executorToHost Map from executor id to host name.
     * @return The list of nodes in host:port format.
     */
-  def getNodesFromPartitions(processedData: DataFrame, defaultListenPort: Int,
+  def getNodesFromPartitions(processedData: DataFrame,
                              executorToHost: Map[Int, String]): Array[(Int, String)] = {
     import processedData.sparkSession.implicits._
     val nodes =
@@ -232,8 +230,7 @@ object LightGBMUtils {
     * @param defaultListenPort The default listening port.
     * @return The list of nodes in host:port format.
     */
-  def getNodesFromPartitionsLocal(processedData: DataFrame,
-                                  defaultListenPort: Int): Array[(Int, String)] = {
+  def getNodesFromPartitionsLocal(processedData: DataFrame): Array[(Int, String)] = {
     import processedData.sparkSession.implicits._
     val blockManager = BlockManagerUtils.getBlockManager(processedData)
     val host = blockManager.master.getMemoryStatus.flatMap({ case (blockManagerId, _) =>

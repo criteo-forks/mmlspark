@@ -67,7 +67,7 @@ class LightGBMRegressor(override val uid: String)
     val (inetAddress, port, future) =
       LightGBMUtils.createDriverNodesThread(numWorkers, df, log, getTimeout)
 
-    val nodes = LightGBMUtils.getNodes(df, getDefaultListenPort, numCoresPerExec)
+    val nodes = LightGBMUtils.getNodes(df, numCoresPerExec)
     /* Run a parallel job via map partitions to initialize the native library and network,
      * translate the data to the LightGBM in-memory representation and train the models
      */
@@ -76,7 +76,7 @@ class LightGBMRegressor(override val uid: String)
     val trainParams = RegressorTrainParams(getParallelism, getNumIterations, getLearningRate, getNumLeaves,
       getObjective, getAlpha, getTweedieVariancePower, getMaxBin, getBaggingFraction, getBaggingFreq, getBaggingSeed,
       getEarlyStoppingRound, getFeatureFraction, getMaxDepth, getMinSumHessianInLeaf, numWorkers, getModelString)
-    val networkParams = NetworkParams(nodes.toMap, getDefaultListenPort, inetAddress, port)
+    val networkParams = NetworkParams(nodes.toMap, inetAddress, port)
     val lightGBMBooster = df
       .mapPartitions(TrainUtils.trainLightGBM(networkParams, getLabelCol, getFeaturesCol,
         log, trainParams, numCoresPerExec))(encoder)

@@ -16,14 +16,6 @@ trait LightGBMParams extends Wrappable with DefaultParamsWritable {
   def getParallelism: String = $(parallelism)
   def setParallelism(value: String): this.type = set(parallelism, value)
 
-  val defaultListenPort = new IntParam(this, "defaultListenPort",
-    "The default listen port on executors, used for testing")
-
-  def getDefaultListenPort: Int = $(defaultListenPort)
-  def setDefaultListenPort(value: Int): this.type = set(defaultListenPort, value)
-
-  setDefault(defaultListenPort -> LightGBMConstants.defaultLocalListenPort)
-
   val numIterations = new IntParam(this, "numIterations",
     "Number of iterations, LightGBM constructs num_class * num_iterations trees")
   setDefault(numIterations->100)
